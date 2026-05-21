@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BonBon</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Courier+Prime:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #fdf6ea;
+    --wood: #8b5a2b;
+    --wood-dark: #5c3412;
+    --wood-light: #a06830;
+    --macho-hit: #d4a855;
+    --hembra-hit: #b87840;
+    --text-dark: #3a1e08;
+    --text-mid: #7a4820;
+    --text-light: #a07848;
+    --btn-bg: #e8d8b8;
+    --btn-border: #cdb888;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Courier Prime', monospace;
+    padding: 32px 20px;
+  }
+
+  .app {
+    width: 100%;
+    max-width: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 36px;
+  }
+
+  .title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.8rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    color: var(--wood-dark);
+  }
+
+  /* ── Drums ── */
+  .drums-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 32px;
+  }
+
+  .drum {
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: ns-resize;
+    user-select: none;
+    touch-action: none;
+    transition: background 0.06s ease, box-shadow 0.06s ease, transform 0.06s ease;
+    flex-shrink: 0;
+  }
+
+  .drum.macho  { width: 108px; height: 108px; background: #e0c48a; }
+  .drum.hembra { width: 140px; height: 140px; background: #d4ac78; }
+
+  .drum.macho.hit {
+    background: var(--macho-hit);
+    box-shadow: 0 0 26px 8px rgba(212,168,85,0.42);
+    transform: scale(0.95);
+  }
+  .drum.hembra.hit {
+    background: var(--hembra-hit);
+    box-shadow: 0 0 30px 10px rgba(184,120,64,0.42);
+    transform: scale(0.95);
+  }
+
+  .drum-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  /* ── Beat grid — always 2 rows × 16 columns, never wraps ── */
+  .beat-grid {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .beat-row {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    width: 100%;
+  }
+
+  .beat-row-label {
+    font-size: 0.54rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    width: 16px;
+    flex-shrink: 0;
+    font-weight: 700;
+  }
+
+  /* 16 equal columns, no wrapping ever */
+  .beat-dots {
+    display: grid;
+    grid-template-columns: repeat(16, 1fr);
+    grid-template-rows: 1fr;
+    gap: 4px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .beat-dot {
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: rgba(139,90,43,0.1);
+    transition: all 0.07s ease;
+    min-width: 0;
+    width: 100%;
+  }
+
+  .beat-dot.on            { background: rgba(139,90,43,0.22); }
+  .beat-dot.current       { outline: 2px solid rgba(139,90,43,0.3); outline-offset: 1px; }
+  .beat-dot.macho-active  { background: var(--macho-hit);  box-shadow: 0 0 6px rgba(212,168,85,0.9); }
+  .beat-dot.hembra-active { background: var(--hembra-hit); box-shadow: 0 0 6px rgba(184,120,64,0.9); }
+  .beat-dot.both-active   { background: var(--wood);       box-shadow: 0 0 8px rgba(139,90,43,0.9); }
+
+  /* ── Tempo ── */
+  .tempo-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
+    cursor: ns-resize;
+    user-select: none;
+    touch-action: none;
+  }
+
+  .tempo-number {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.6rem;
+    font-weight: 700;
+    color: var(--text-dark);
+    line-height: 1;
+    pointer-events: none;
+  }
+
+  .tempo-label {
+    font-size: 0.56rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--text-light);
+    pointer-events: none;
+  }
+
+  /* ── Play button ── */
+  .play-btn {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    border: 1.5px solid var(--btn-border);
+    background: var(--btn-bg);
+    color: var(--text-mid);
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(90,50,20,0.1);
+    transition: all 0.14s ease;
+    padding: 0;
+    line-height: 1;
+  }
+
+  .stop-icon {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    background: var(--text-mid);
+    border-radius: 2px;
+    pointer-events: none;
+  }
+
+  .play-btn:hover  { background: #dfd0ae; transform: scale(1.05); }
+  .play-btn:active { transform: scale(0.96); }
+  .play-btn.playing { background: #dfd0ae; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="title">BonBon</div>
+
+  <div class="drums-row">
+    <div class="drum macho"  id="machoDrum"  data-value="3"><div class="drum-number" id="machoNum">3</div></div>
+    <div class="drum hembra" id="hembraDrum" data-value="4"><div class="drum-number" id="hembraNum">4</div></div>
+  </div>
+
+  <div class="beat-grid">
+    <div class="beat-row">
+      <div class="beat-row-label">M</div>
+      <div class="beat-dots" id="machoDots"></div>
+    </div>
+    <div class="beat-row">
+      <div class="beat-row-label">H</div>
+      <div class="beat-dots" id="hembraDots"></div>
+    </div>
+  </div>
+
+  <div class="tempo-block" id="tempoBlock" data-value="80">
+    <div class="tempo-number" id="tempoNum">80</div>
+    <div class="tempo-label">BPM</div>
+  </div>
+
+  <button class="play-btn" id="playBtn">▶</button>
+
+</div>
+<script>
+  const STEPS = 16;
+  let machoN = 3, hembraN = 4, tempo = 80;
+  let playing = false, intervalId = null, pulse = 0, audioCtx = null;
+
+  // ── Drag helper ──
+  function makeDrag(elId, numId, init, min, max, pxStep, onChange) {
+    const el  = document.getElementById(elId);
+    const num = document.getElementById(numId);
+    let startY = 0, startVal = init, dragging = false;
+
+    function set(v) {
+      v = Math.max(min, Math.min(max, Math.round(v)));
+      el.dataset.value = v;
+      num.textContent = v;
+      onChange(v);
+    }
+
+    el.addEventListener('mousedown', e => {
+      dragging = true; startY = e.clientY; startVal = +el.dataset.value; e.preventDefault();
+    });
+    el.addEventListener('touchstart', e => {
+      dragging = true; startY = e.touches[0].clientY; startVal = +el.dataset.value; e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('mousemove', e => {
+      if (!dragging) return;
+      set(startVal + (startY - e.clientY) / pxStep);
+    });
+    window.addEventListener('touchmove', e => {
+      if (!dragging) return;
+      set(startVal + (startY - e.touches[0].clientY) / pxStep);
+      e.preventDefault();
+    }, { passive: false });
+    window.addEventListener('mouseup',  () => dragging = false);
+    window.addEventListener('touchend', () => dragging = false);
+    set(init);
+  }
+
+  makeDrag('machoDrum',  'machoNum',  3,  2,   9, 16, v => { machoN  = v; renderGrid(playing ? pulse % STEPS : -1); });
+  makeDrag('hembraDrum', 'hembraNum', 4,  2,   9, 16, v => { hembraN = v; renderGrid(playing ? pulse % STEPS : -1); });
+  makeDrag('tempoBlock', 'tempoNum', 80, 40, 200,  4, v => { tempo   = v; if (playing) { stopSeq(); startSeq(); } });
+
+  // ── Audio ──
+  function getCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    return audioCtx;
+  }
+  function tone(freq, gain, dur) {
+    const c = getCtx(), o = c.createOscillator(), g = c.createGain(), t = c.currentTime;
+    o.connect(g); g.connect(c.destination);
+    o.type = 'sine';
+    o.frequency.setValueAtTime(freq, t);
+    o.frequency.exponentialRampToValueAtTime(freq * 0.45, t + dur);
+    g.gain.setValueAtTime(gain, t);
+    g.gain.exponentialRampToValueAtTime(0.001, t + dur);
+    o.start(t); o.stop(t + dur);
+  }
+  function hitMacho() {
+    tone(320, 0.5, 0.12);
+    const el = document.getElementById('machoDrum');
+    el.classList.add('hit'); setTimeout(() => el.classList.remove('hit'), 80);
+  }
+  function hitHembra() {
+    tone(180, 0.6, 0.18);
+    const el = document.getElementById('hembraDrum');
+    el.classList.add('hit'); setTimeout(() => el.classList.remove('hit'), 80);
+  }
+
+  // ── Grid ──
+  function buildHits(n) {
+    const hits = new Set();
+    for (let i = 0; i < n; i++) hits.add(Math.round(i * STEPS / n) % STEPS);
+    return hits;
+  }
+
+  function renderGrid(cur) {
+    const mH = buildHits(machoN);
+    const hH = buildHits(hembraN);
+    const mEl = document.getElementById('machoDots');
+    const hEl = document.getElementById('hembraDots');
+    mEl.innerHTML = ''; hEl.innerHTML = '';
+
+    for (let i = 0; i < STEPS; i++) {
+      const md = document.createElement('div');
+      const hd = document.createElement('div');
+      const isM  = mH.has(i);
+      const isH  = hH.has(i);
+      const live = playing && i === ((cur % STEPS + STEPS) % STEPS);
+
+      md.className = 'beat-dot' + (isM ? ' on' : '');
+      hd.className = 'beat-dot' + (isH ? ' on' : '');
+
+      if (live) {
+        if (isM && isH) { md.classList.add('both-active');   hd.classList.add('both-active'); }
+        else if (isM)     md.classList.add('macho-active');
+        else if (isH)     hd.classList.add('hembra-active');
+        else            { md.classList.add('current');        hd.classList.add('current'); }
+      }
+
+      mEl.appendChild(md);
+      hEl.appendChild(hd);
+    }
+  }
+
+  // ── Sequencer ──
+  function startSeq() {
+    pulse = 0;
+    const ms = (60000 / tempo) / 4;
+    intervalId = setInterval(() => {
+      const p = pulse % STEPS;
+      const mH = buildHits(machoN);
+      const hH = buildHits(hembraN);
+      if (mH.has(p)) hitMacho();
+      if (hH.has(p)) hitHembra();
+      renderGrid(p);
+      pulse++;
+    }, ms);
+  }
+
+  function stopSeq() {
+    clearInterval(intervalId); intervalId = null; pulse = 0; renderGrid(-1);
+  }
+
+  const btn = document.getElementById('playBtn');
+  btn.addEventListener('click', () => {
+    playing = !playing;
+    if (playing) {
+      startSeq();
+      btn.innerHTML = '<span class="stop-icon"></span>';
+      btn.classList.add('playing');
+    } else {
+      stopSeq();
+      btn.textContent = '▶';
+      btn.classList.remove('playing');
+    }
+  });
+
+  renderGrid(-1);
+</script>
+</body>
+</html>
